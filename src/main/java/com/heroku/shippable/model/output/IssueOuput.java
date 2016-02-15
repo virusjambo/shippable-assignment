@@ -7,6 +7,7 @@ public class IssueOuput extends ApiOutput {
 	private int totalIssues;
 	private int totalIssuesPastDay;
 	private int totalIssuesPastWeek;
+	private int totalIssuesMoreThanWeek;
 
 	public int getTotalIssues() {
 		return totalIssues;
@@ -49,8 +50,27 @@ public class IssueOuput extends ApiOutput {
 		this.totalIssuesPastWeek = totalIssuesPastWeek;
 	}
 
-	IssueOuput() {
+	public IssueOuput() {
 		super();
 	}
 
+	public int getTotalIssuesMoreThanWeek() {
+		return totalIssuesMoreThanWeek;
+	}
+
+	public void setTotalIssuesMoreThanWeek(int totalIssuesMoreThanWeek) {
+		this.totalIssuesMoreThanWeek = totalIssuesMoreThanWeek;
+	}
+	
+	public void incrementTotalIssuesPastDay(){
+		this.totalIssuesPastDay++;
+	}
+	
+	public void inrementTotalIssuesPastWeek(){
+		this.totalIssuesPastWeek++;
+	}
+	
+	public void inrementTotalIssuesMoreThanWeek(){
+		this.totalIssuesMoreThanWeek++;
+	}
 }

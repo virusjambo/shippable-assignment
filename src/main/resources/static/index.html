@@ -18,10 +18,13 @@
 
 	<nav style="margin-bottom: 30px">
 		<div class="nav-wrapper">
-			<a href="#" class="brand-logo">Shippable <!-- Assignment --></a>
+			<a href="#" class="brand-logo">Shippable Assignment </a>
 
 		</div>
 	</nav>
+
+
+
 
 	<div class="row">
 		<div class="input-field col s6">
@@ -29,40 +32,48 @@
 			<input id="repo_name" type="text" class="validate"> <label
 				for="repo_name">Enter your repository URL</label>
 		</div>
-		<div class="col s6">
+		<div class="col s2">
 			<div id="submit" class="waves-effect waves-light btn-large">
 				submit</div>
 		</div>
 
 	</div>
-	<div class="row">
-		<div class=" col s6">
-			<div class="collection ">
-
-				<a href="#!" class="collection-item">Total Issues<span
-					id="total" class="new badge">0</span></a> 
-					<a href="#!"
-					class="collection-item">Issues last 24 hour<span id="past24"
-					class="new badge">0</span></a>
-					 <a href="#!" class="collection-item">
-					Issues last 7 day<span id="past7" class="new badge">0</span>
-				</a>
-
+	<div id="progress-bar" class="row hide">
+		<div class="col s7">
+			<div class="progress">
+				<div class="indeterminate"></div>
 			</div>
 		</div>
 	</div>
-	
+	<div class="row">
+		<div class=" col s7">
+			<div class="collection ">
+
+				<a href="#!" class="collection-item">Total number of open issues<span
+					id="total" class="new badge">0</span></a> <a href="#!"
+					class="collection-item">Number of open issues that were opened
+					in the last 24 hours<span id="past24" class="new badge">0</span>
+				</a> <a href="#!" class="collection-item"> Number of open issues
+					that were opened more than 24 hours ago but less than 7 days ago<span
+					id="past7" class="new badge">0</span>
+				</a> <a href="#!" class="collection-item"> Number of open issues
+					that were opened more than 7 days ago <span id="all_issues"
+					class="new badge">0</span>
+				</a>
+			</div>
+		</div>
+	</div>
+
 	<div class="row hide" id="error_div">
 		<div class=" col s6">
 			<div class="collection ">
 
 				<a href="#!" class="collection-item" style="color: red !important">Error:<span
-					id="error" >0</span></a> 
+					id="error">0</span></a>
 
 			</div>
 		</div>
 	</div>
-
 	<!-- Latest compiled and minified JavaScript -->
 	<script
 		src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>

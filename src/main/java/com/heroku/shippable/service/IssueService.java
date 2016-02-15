@@ -5,6 +5,7 @@ import static com.heroku.shippable.constants.ShippableConstants.MILLI_SECONDS_IN
 import static com.heroku.shippable.constants.ShippableConstants.PAGE_SIZE;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -27,11 +28,13 @@ import com.heroku.shippable.model.Issue;
 import com.heroku.shippable.model.RepositoryInfo;
 import com.heroku.shippable.model.output.IssueOuput;
 
+import scala.annotation.meta.getter;
+
 /**
  * @author Amit
  * 
- *  Responsible for making rest call to github and calculating
- *         desired output as per problem statement.
+ *         Responsible for making rest call to github and calculating desired
+ *         output as per problem statement.
  */
 @Service
 public class IssueService {
@@ -52,14 +55,7 @@ public class IssueService {
 		isValidUrl(repoUrl);
 		Map<String, String> repoDetails = buildRequestMap(repoUrl);
 		RepositoryInfo repositoryInfo = findRepoInfo(repoDetails);
-		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("0"));
-		int issuesPast24Hour = findIssuesInPeriod(repoDetails, repositoryInfo,
-				c.getTimeInMillis() - MILLI_SECONDS_IN_DAY);
-		int issuesPastWeek = findIssuesInPeriod(repoDetails, repositoryInfo,
-				c.getTimeInMillis() - (MILLI_SECONDS_IN_DAY * 7));
-
-		return new IssueOuput(Integer.valueOf(repositoryInfo.getOpen_issues()), issuesPast24Hour, issuesPastWeek);
-
+		return findIssuesInPeriod(repoDetails, repositoryInfo);
 	}
 
 	/**
@@ -70,36 +66,37 @@ public class IssueService {
 	 * @throws ShippableException
 	 *             Finds issues raised in particular time period
 	 */
-	private int findIssuesInPeriod(Map<String, String> repoDetails, RepositoryInfo repositoryInfo,
-			Long timeinMilliSeconds) throws ShippableException {
-		int count = 0;
+	private IssueOuput findIssuesInPeriod(Map<String, String> repoDetails, RepositoryInfo repositoryInfo)
+			throws ShippableException {
+		IssueOuput issueOuput = new IssueOuput();
 		int totalOpenIssue = Integer.valueOf(repositoryInfo.getOpen_issues());
 		if (Integer.valueOf(repositoryInfo.getOpen_issues()) == 0) {
-			return count;
+			return new IssueOuput();
 		}
 
-		repoDetails.put(ShippableConstants.SINCE, getTimeInISO8601Format(timeinMilliSeconds));
+		// repoDetails.put(ShippableConstants.SINCE,
+		// getTimeInISO8601Format(timeinMilliSeconds));
 		// else calculate
 		int totalHits = totalOpenIssue % PAGE_SIZE;
 		for (int i = 0; i < totalHits; i++) {
-			setPagination(repoDetails, i);
+			setPagination(repoDetails, i + 1);
 			String generatedUrl = UrlGenerator.ISSUES_URL.generate(repoDetails);
 			String listOfIssues = (String) gitRepoService.provisionService(generatedUrl, String.class);
-			List<Issue> data = null;
+			List<Issue> issues = null;
 			try {
-				data = jacksonObjectMapper.readValue(listOfIssues, new TypeReference<List<Issue>>() {
+				issues = jacksonObjectMapper.readValue(listOfIssues, new TypeReference<List<Issue>>() {
 				});
 			} catch (Exception e) {
 				e.printStackTrace();
 
 			}
-			count += data.size();
-			if (data.size() < PAGE_SIZE) {
+			issueOuput = processIssues(issues, issueOuput);
+			if (issues.size() < PAGE_SIZE) {
 				break;
 			}
 		}
-
-		return count;
+		issueOuput.setTotalIssues(totalOpenIssue);
+		return issueOuput;
 
 	}
 
@@ -180,14 +177,45 @@ public class IssueService {
 
 	/**
 	 * @param timeinMilliSeconds
-	 * @return
-	 * Can be moved to utility class
+	 * @return Can be moved to utility class
 	 */
 	private String getTimeInISO8601Format(long timeinMilliSeconds) {
 		TimeZone tz = TimeZone.getTimeZone("UTC");
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		df.setTimeZone(tz);
 		return df.format(new Date(timeinMilliSeconds));
+	}
+
+	private IssueOuput processIssues(List<Issue> responseIssues, IssueOuput issueOuput) {
+		Calendar cal = Calendar.getInstance();
+		Date dc = cal.getTime();
+		for (Issue item : responseIssues) {
+
+			Date di = toDate(item.getCreated_at());
+			int daysDiff = getDays(di, dc);
+			if (daysDiff <= 0) {
+				issueOuput.incrementTotalIssuesPastDay();
+			} else if (daysDiff <= 7) {
+				issueOuput.inrementTotalIssuesPastWeek();
+			} else {
+				issueOuput.inrementTotalIssuesMoreThanWeek();
+			}
+		}
+		return issueOuput;
+	}
+
+	private int getDays(Date d1, Date d2) {
+		return (int)Math.abs( (d2.getTime() - d1.getTime()) / ShippableConstants.MILLI_SECONDS_IN_DAY);
+	}
+
+	private Date toDate(Object source) {
+		DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		try {
+			return dateFormatter.parse(source.toString());
+		} catch (ParseException e) {
+
+		}
+		return null;
 	}
 
 }
